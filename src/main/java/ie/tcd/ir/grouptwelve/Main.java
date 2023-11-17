@@ -15,23 +15,9 @@ public class Main {
 
     public static String RESULTS_DIRECTORY = "results/";
 
-
-    static void testCombination(Analyzer analyzer, Similarity similarity, String scoringApproach) {
-        System.out.println("Creating Index");
-        Indexer createIndexes = new Indexer(analyzer);
-        System.out.println("Running Queries");
-        QueryEngine makeQueries = new QueryEngine(analyzer, similarity, scoringApproach);
-    }
-
     public static void main( String[] args )
     {
-        testCombination(new StandardAnalyzer(), new ClassicSimilarity(), "StandardAnalyzerVSM");
-        testCombination(new WhitespaceAnalyzer(), new ClassicSimilarity(), "WhitespaceAnalyzerVSM");
-        testCombination(new EnglishAnalyzer(), new ClassicSimilarity(), "EnglishAnalyzerVSM");
-
-        testCombination(new StandardAnalyzer(), new BM25Similarity(), "StandardAnalyzerBM25");
-        testCombination(new WhitespaceAnalyzer(), new BM25Similarity(), "WhitespaceAnalyzerBM25");
-        testCombination(new EnglishAnalyzer(), new BM25Similarity(), "EnglishAnalyzerBM25");
-
+        // index the federal reserver corpus which is in ./corpus/fr94
+        Indexer createIndexes = new FederalReserveIndexer(new EnglishAnalyzer(), "./corpus/fr94");
     }
 }
