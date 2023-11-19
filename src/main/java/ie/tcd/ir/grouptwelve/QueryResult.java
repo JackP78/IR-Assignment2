@@ -35,11 +35,11 @@ public class QueryResult {
         this.queryId = queryId;
     }
 
-    public int getDocumentId() {
+    public String getDocumentId() {
         return documentId;
     }
 
-    public void setDocumentId(int documentId) {
+    public void setDocumentId(String documentId) {
         this.documentId = documentId;
     }
 
@@ -51,9 +51,9 @@ public class QueryResult {
 
     private int queryId;
 
-    private int documentId;
+    private String documentId;
 
-    public QueryResult(int queryId, int documentId, int rank, float score, String runName) {
+    public QueryResult(int queryId, String documentId, int rank, float score, String runName) {
         this.rank = rank;
         this.score = score;
         this.runName = runName;
@@ -66,7 +66,7 @@ public class QueryResult {
     public String toString() {
         return Integer.toString(queryId) + "\t"
                 + "Q0 \t"
-                + Integer.toString(documentId) + "\t"
+                + documentId + "\t"
                 + Integer.toString(rank) + "\t"
                 + Float.toString(score) + "\t"
                 + runName;

@@ -92,10 +92,12 @@ class QueryEngine {
                 String searchTerm = stripPunctuation(thisQuery.getNarrative());
                 Query query = parser.parse(searchTerm);
                 ScoreDoc[] hits = indexSearcher.search(query, 50).scoreDocs;
+                if (hits.length == 0) {
+                    System.out.println("No results for query " + thisQuery.getId());
+                }
                 for (int i = 0; i < hits.length; i++) {
                     Document hitDoc = indexSearcher.doc(hits[i].doc);
-                    QueryResult searchResult = new QueryResult(thisQuery.getId(),
-                            Integer.parseInt(hitDoc.get("ID")), i+1, hits[i].score, this.similarityStrategy);
+                    QueryResult searchResult = new QueryResult(thisQuery.getId(),hitDoc.get("ID"), i+1, hits[i].score, this.similarityStrategy);
                     this.results.add(searchResult);
                 }
             }

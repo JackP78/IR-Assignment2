@@ -3,6 +3,7 @@ package ie.tcd.ir.grouptwelve;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -36,11 +37,11 @@ public class FinancialTimesIndexer extends Indexer {
 
                 Elements docTitle = document.select("HEADLINE");
                 System.out.println("doctitle: " + docTitle.text());
-                LuceneDocument.add(new StringField(Indexer.TITLE,docTitle.text(), Field.Store.YES));
+                LuceneDocument.add(new TextField(Indexer.TITLE,docTitle.text(), Field.Store.YES));
 
                 Elements text = document.select("text");
                 System.out.println("text: " + text.text());
-                LuceneDocument.add(new StringField(Indexer.BODY,docTitle.text(), Field.Store.YES));
+                LuceneDocument.add(new TextField(Indexer.BODY,docTitle.text(), Field.Store.YES));
 
                 // add the document to the lucene index
                 indexWriter.addDocument(LuceneDocument);
