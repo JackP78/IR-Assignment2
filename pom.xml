@@ -108,7 +108,7 @@
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>ie.tcd.ir.grouptwelve.App</mainClass>
+                                    <mainClass>ie.tcd.ir.grouptwelve.Main</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

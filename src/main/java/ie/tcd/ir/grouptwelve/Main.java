@@ -25,6 +25,8 @@ public class Main {
         Indexer fedReserveIndexer = new FederalReserveIndexer(new EnglishAnalyzer(), "./corpus/fr94");
         // index the financial times corpus which is in ./corpus/ft
         Indexer ftIndexer = new FinancialTimesIndexer(new EnglishAnalyzer(), "./corpus/ft");
+        // index the federal reserver corpus which is in ./corpus/fr94
+        Indexer foriegnBroadcastIndexer = new ForiegnBroadcastInformationServiceIndexer(new EnglishAnalyzer(), "./corpus/fbis");
 
         // now run the queries
         QueryEngine makeQueries = new QueryEngine(analyzer, similarity, "Standard");
