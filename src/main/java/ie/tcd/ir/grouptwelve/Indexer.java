@@ -45,7 +45,7 @@ abstract public class Indexer
 
     }
 
-    protected void processFiles(File dirPath, IndexWriter indexWriter){
+    protected void processFiles(File dirPath, IndexWriter indexWriter) {
         File filesList[] = dirPath.listFiles();
         for(File file : filesList) {
             if(file.isFile()) {
@@ -69,7 +69,12 @@ abstract public class Indexer
         config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         indexWriter = new IndexWriter(directory, config);
 
-        this.processFiles(this.corpusDirectory, indexWriter);
+        if (this.corpusDirectory.isDirectory()) {
+            this.processFiles(this.corpusDirectory, indexWriter);
+        }
+        else {
+            this.processSingleFile(corpusDirectory, indexWriter);
+        }
 
         indexWriter.close();
         directory.close();

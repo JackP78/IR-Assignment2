@@ -16,8 +16,11 @@ public class Main {
     public static String RESULTS_DIRECTORY = "results/";
 
     public static void main( String[] args )
+
     {
         // index the federal reserver corpus which is in ./corpus/fr94
-        Indexer createIndexes = new FederalReserveIndexer(new EnglishAnalyzer(), "./corpus/fr94");
+        Indexer fedReserveIndexer = new FederalReserveIndexer(new EnglishAnalyzer(), "./corpus/fr94");
+        // index the financial times corpus which is in ./corpus/ft
+        Indexer ftIndexer = new FinancialTimesIndexer(new EnglishAnalyzer(), "./corpus/ft");
     }
 }
