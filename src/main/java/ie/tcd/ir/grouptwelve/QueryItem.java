@@ -2,24 +2,51 @@ package ie.tcd.ir.grouptwelve;
 
 public class QueryItem {
 
-    public QueryItem(int id, String body) {
+    public QueryItem(int id, String title, String description, String narrative) {
         this.id = id;
-        this.body = body;
+        this.title = title;
+        this.description = description;
+        this.narrative = narrative;
     }
+
+    private int id;
+
 
     public int getId() {
         return id;
     }
 
-    public String getBody() {
-        return body;
+    public void setId(int id) {
+        this.id = id;
     }
 
-    public void setBody(String body) {
-        this.body = body;
+    public String getDescription() {
+        return description;
     }
 
-    private int id;
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-    private String body;
+    public String getNarrative() {
+        return narrative;
+    }
+
+    public void setNarrative(String narrative) {
+        this.narrative = narrative;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    private String description;
+
+    private String narrative;
+
+    private String title;
 }

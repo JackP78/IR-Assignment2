@@ -14,6 +14,9 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 
 class QueryEngine {
@@ -26,7 +29,6 @@ class QueryEngine {
     public QueryEngine(Analyzer analyzer, Similarity similarity, String type) {
         try {
             ParseFile();
-
             this.similarityStrategy = type;
             ExecuteQueries(analyzer, similarity);
             SaveResultsFile();
@@ -52,33 +54,23 @@ class QueryEngine {
 
     public void ParseFile() throws IOException {
         // File opening Setup
-        InputStream fstream = QueryEngine.class.getClassLoader().getResourceAsStream("cran.qry");
-        BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
-        String currentLine;
+        InputStream fstream = QueryEngine.class.getClassLoader().getResourceAsStream("topics.xml");
+        org.jsoup.nodes.Document doc = Jsoup.parse(fstream, "UTF-8", "http://example.com/");
 
-        int queryNumber = 1;
-        boolean firstPass = true;
-        String queryBody = "";
-
-        while ((currentLine = br.readLine()) != null) {
-            if(currentLine.startsWith(".I")) {
-                if(!firstPass) {
-                    QueryItem query = new QueryItem(queryNumber++, queryBody);
-                    this.queries.add(query);
-                    queryBody = "";
-                }
-                firstPass = false;
-            }
-            else if(!currentLine.startsWith(".W")) {
-                if (queryBody == "") {
-                    queryBody = currentLine;
-                } else {
-                    queryBody = queryBody + "\n" + currentLine;
-                }
-            }
+        Elements topics = doc.body().select("top");
+        int i = 0;
+        for (Element topic : topics) {
+            Elements queryNumber = topic.select("num");
+            System.out.println("query: " + queryNumber.text());
+            Elements queryTitle = topic.select("title");
+            System.out.println("title: " + queryTitle.text());
+            Elements description = topic.select("desc");
+            System.out.println("description: " + description.text());
+            Elements narrative = topic.select("narr");
+            System.out.println("description: " + narrative.text());
+            QueryItem query = new QueryItem(i++, queryTitle.text(), description.text(), narrative.text());
+            this.queries.add(query);
         }
-        QueryItem query = new QueryItem(queryNumber, queryBody);
-        this.queries.add(query);
 
         System.out.println("Num queries processed " + this.queries.size());
     }
@@ -95,16 +87,23 @@ class QueryEngine {
 		QueryParser parser = new QueryParser("Body", analyzer);
 
         for (QueryItem thisQuery: this.queries) {
-            System.out.println("Query ID " + thisQuery.getId() + " parsed");
-            String searchTerm = stripPunctuation(thisQuery.getBody());
-            Query query = parser.parse(searchTerm);
-            ScoreDoc[] hits = indexSearcher.search(query, 50).scoreDocs;
-            for (int i = 0; i < hits.length; i++) {
-                Document hitDoc = indexSearcher.doc(hits[i].doc);
-                QueryResult searchResult = new QueryResult(thisQuery.getId(),
-                    Integer.parseInt(hitDoc.get("ID")), i+1, hits[i].score, this.similarityStrategy);
-                this.results.add(searchResult);
-		    }
+            try {
+                System.out.println("Query ID " + thisQuery.getId() + " parsed");
+                String searchTerm = stripPunctuation(thisQuery.getNarrative());
+                Query query = parser.parse(searchTerm);
+                ScoreDoc[] hits = indexSearcher.search(query, 50).scoreDocs;
+                for (int i = 0; i < hits.length; i++) {
+                    Document hitDoc = indexSearcher.doc(hits[i].doc);
+                    QueryResult searchResult = new QueryResult(thisQuery.getId(),
+                            Integer.parseInt(hitDoc.get("ID")), i+1, hits[i].score, this.similarityStrategy);
+                    this.results.add(searchResult);
+                }
+            }
+            catch (Exception e) {
+                System.out.println("Error running query " + thisQuery.getId());
+                e.printStackTrace();
+            }
+
         }
 
 		reader.close();
@@ -113,7 +112,7 @@ class QueryEngine {
 
     // get rid of those hasty question marks
     private String stripPunctuation(String line) {
-        return line.replaceAll("\\?", "");
+        return line.replaceAll("\\/", "");
     }
 
 }

@@ -3,6 +3,45 @@ package ie.tcd.ir.grouptwelve;
 public class QueryResult {
 
 
+    public int getRank() {
+        return rank;
+    }
+
+    public void setRank(int rank) {
+        this.rank = rank;
+    }
+
+    public float getScore() {
+        return score;
+    }
+
+    public void setScore(float score) {
+        this.score = score;
+    }
+
+    public String getRunName() {
+        return runName;
+    }
+
+    public void setRunName(String runName) {
+        this.runName = runName;
+    }
+
+    public int getQueryId() {
+        return queryId;
+    }
+
+    public void setQueryId(int queryId) {
+        this.queryId = queryId;
+    }
+
+    public int getDocumentId() {
+        return documentId;
+    }
+
+    public void setDocumentId(int documentId) {
+        this.documentId = documentId;
+    }
 
     private int rank;
 

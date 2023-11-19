@@ -18,9 +18,15 @@ public class Main {
     public static void main( String[] args )
 
     {
+        Analyzer analyzer= new EnglishAnalyzer();
+        Similarity similarity = new ClassicSimilarity();
+
         // index the federal reserver corpus which is in ./corpus/fr94
         Indexer fedReserveIndexer = new FederalReserveIndexer(new EnglishAnalyzer(), "./corpus/fr94");
         // index the financial times corpus which is in ./corpus/ft
         Indexer ftIndexer = new FinancialTimesIndexer(new EnglishAnalyzer(), "./corpus/ft");
+
+        // now run the queries
+        QueryEngine makeQueries = new QueryEngine(analyzer, similarity, "Standard");
     }
 }
