@@ -32,6 +32,7 @@ abstract public class Indexer
     protected static String SUMMARY = "Summary";
     protected IndexWriter indexWriter;
     private int filesProcessed = 0;
+    protected static int totalfilesProcessed = 0;
 
 
     public Indexer(Analyzer analyzer, String corpusDirectory) {
@@ -51,6 +52,7 @@ abstract public class Indexer
             if(file.isFile()) {
                 processSingleFile(file, indexWriter);
                 filesProcessed++;
+                totalfilesProcessed++;
             } else {
                 processFiles(file, indexWriter);
             }
@@ -66,7 +68,13 @@ abstract public class Indexer
 
         Directory directory = FSDirectory.open(Paths.get(Main.INDEX_DIRECTORY));
         IndexWriterConfig config = new IndexWriterConfig(this.analyzer);
-        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+        if (totalfilesProcessed == 0) {
+            totalfilesProcessed = 1;
+            config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+        } else {
+            config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+        }
+
         indexWriter = new IndexWriter(directory, config);
 
         if (this.corpusDirectory.isDirectory()) {
