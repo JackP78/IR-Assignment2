@@ -58,17 +58,17 @@ class QueryEngine {
         org.jsoup.nodes.Document doc = Jsoup.parse(fstream, "UTF-8", "http://example.com/");
 
         Elements topics = doc.body().select("top");
-        int i = 0;
         for (Element topic : topics) {
             Elements queryNumber = topic.select("num");
-            System.out.println("query: " + queryNumber.text());
+            String queryId = queryNumber.text().trim().substring(8);
+            System.out.println("query: " + queryId);
             Elements queryTitle = topic.select("title");
             System.out.println("title: " + queryTitle.text());
             Elements description = topic.select("desc");
             System.out.println("description: " + description.text());
             Elements narrative = topic.select("narr");
             System.out.println("description: " + narrative.text());
-            QueryItem query = new QueryItem(i++, queryTitle.text(), description.text(), narrative.text());
+            QueryItem query = new QueryItem(Integer.parseInt(queryId), queryTitle.text(), description.text(), narrative.text());
             this.queries.add(query);
         }
 
