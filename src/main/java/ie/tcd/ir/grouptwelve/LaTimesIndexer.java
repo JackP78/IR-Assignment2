@@ -11,6 +11,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.jsoup.nodes.Element;
+import org.apache.lucene.document.TextField;
 
 public class LaTimesIndexer extends Indexer {
 
@@ -34,18 +35,16 @@ public class LaTimesIndexer extends Indexer {
 
                 // Doc Number field
                 Elements docNumber = document.select("docno");
-                System.out.println("docNumber: " + docNumber.text());
+                logger.info("docNumber: " + docNumber.text());
                 LuceneDocument.add(new StringField(Indexer.ID, docNumber.text(), Field.Store.YES));
 
                 // Doc Headline (i.e. title) field
                 Elements headline = document.select("headline");
-                System.out.println("doctitle (headline): " + headline.text());
-                LuceneDocument.add(new StringField(Indexer.TITLE, headline.text(), Field.Store.YES));
+                LuceneDocument.add(new TextField(Indexer.TITLE, headline.text(), Field.Store.YES));
 
                 // Doc main text field
                 Elements text = document.select("text");
-                System.out.println("text: " + text.text());
-                LuceneDocument.add(new StringField(Indexer.BODY, text.text(), Field.Store.YES));
+                LuceneDocument.add(new TextField(Indexer.BODY, text.text(), Field.Store.YES));
 
                 // add the document to the lucene index
                 indexWriter.addDocument(LuceneDocument);

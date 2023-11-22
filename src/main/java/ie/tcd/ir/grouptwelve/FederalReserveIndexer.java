@@ -35,19 +35,16 @@ public class FederalReserveIndexer extends Indexer {
 
                 // select the relevant fields that will be made into Lucene fields
                 Elements docNumber = document.select("docno");
-                System.out.println("docNumber: " + docNumber.text());
+                logger.info("docNumber: " + docNumber.text());
                 LuceneDocument.add(new StringField(Indexer.ID,docNumber.text(), Field.Store.YES));
 
                 Elements docTitle = document.select("doctitle");
-                System.out.println("doctitle: " + docTitle.text());
                 LuceneDocument.add(new TextField(Indexer.TITLE,docTitle.text(), Field.Store.YES));
 
                 Elements summary = document.select("summary");
-                System.out.println("summary: " + summary.text());
                 LuceneDocument.add(new TextField(Indexer.SUMMARY,summary.text(), Field.Store.YES));
 
                 Elements text = document.select("text");
-                System.out.println("text: " + text.text());
                 LuceneDocument.add(new TextField(Indexer.BODY,docTitle.text(), Field.Store.YES));
 
                 // add the document to the lucene index

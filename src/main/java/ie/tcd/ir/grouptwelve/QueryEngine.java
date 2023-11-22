@@ -3,6 +3,8 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+
+import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
@@ -84,13 +86,16 @@ class QueryEngine {
         indexSearcher.setSimilarity(similarity);
         System.out.println(indexSearcher.getSimilarity());
 
-		QueryParser parser = new QueryParser("Body", analyzer);
-
-        for (QueryItem thisQuery: this.queries) {
+		for (QueryItem thisQuery: this.queries) {
             try {
                 System.out.println("Query ID " + thisQuery.getId() + " parsed");
-                String searchTerm = stripPunctuation(thisQuery.getNarrative());
-                Query query = parser.parse(searchTerm);
+                String narrativeTerm = stripPunctuation(thisQuery.getNarrative());
+                String descriptionTerm = stripPunctuation(thisQuery.getDescription());
+                String titleTerm = stripPunctuation(thisQuery.getDescription());
+                String[] terms = new String[]{narrativeTerm, descriptionTerm, titleTerm};
+                Query query = MultiFieldQueryParser.parse(terms,
+                        new String[]{Indexer.TITLE, Indexer.SUMMARY, Indexer.BODY},
+                        analyzer);
                 ScoreDoc[] hits = indexSearcher.search(query, 50).scoreDocs;
                 if (hits.length == 0) {
                     System.out.println("No results for query " + thisQuery.getId());

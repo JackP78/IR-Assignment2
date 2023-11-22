@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
@@ -33,6 +35,8 @@ abstract public class Indexer
     protected IndexWriter indexWriter;
     private int filesProcessed = 0;
     protected static int totalfilesProcessed = 0;
+
+    protected static Logger logger = LogManager.getLogger(Indexer.class);
 
 
     public Indexer(Analyzer analyzer, String corpusDirectory) {
