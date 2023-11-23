@@ -4,6 +4,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -28,6 +30,8 @@ class QueryEngine {
     private ArrayList<QueryItem> queries = new ArrayList<QueryItem>();
     private ArrayList<QueryResult> results = new ArrayList<QueryResult>();
 
+    protected static Logger logger = LogManager.getLogger(QueryEngine.class);
+
     public QueryEngine(Analyzer analyzer, Similarity similarity, String type) {
         try {
             ParseFile();
@@ -35,15 +39,15 @@ class QueryEngine {
             ExecuteQueries(analyzer, similarity);
             SaveResultsFile();
         } catch (Exception e) {
-            System.out.println("Issue with QueryEngine.");
-            e.printStackTrace();
+            logger.error("Issue with QueryEngine.");
+            logger.error("Exception: ", e);
         }
     }
 
     public void SaveResultsFile() throws IOException {
         Files.createDirectories(Paths.get(Main.RESULTS_DIRECTORY));
         String filePath = Main.RESULTS_DIRECTORY + this.similarityStrategy + ".test";
-        System.out.println("Writing file " + filePath);
+        logger.info("Writing file " + filePath);
 
         FileWriter fileWriter = new FileWriter(filePath);
         PrintWriter printWriter = new PrintWriter(fileWriter);
@@ -63,18 +67,18 @@ class QueryEngine {
         for (Element topic : topics) {
             Elements queryNumber = topic.select("num");
             String queryId = queryNumber.text().trim().substring(8);
-            System.out.println("query: " + queryId);
+            logger.debug("query: " + queryId);
             Elements queryTitle = topic.select("title");
-            System.out.println("title: " + queryTitle.text());
+            logger.debug("title: " + queryTitle.text());
             Elements description = topic.select("desc");
-            System.out.println("description: " + description.text());
+            logger.debug("description: " + description.text());
             Elements narrative = topic.select("narr");
-            System.out.println("description: " + narrative.text());
+            logger.debug("narrative: " + narrative.text());
             QueryItem query = new QueryItem(Integer.parseInt(queryId), queryTitle.text(), description.text(), narrative.text());
             this.queries.add(query);
         }
 
-        System.out.println("Num queries processed " + this.queries.size());
+        logger.info("Num queries processed " + this.queries.size());
     }
 
     public void ExecuteQueries(Analyzer analyzer, Similarity similarity) throws IOException, ParseException {
@@ -84,11 +88,10 @@ class QueryEngine {
 		IndexSearcher indexSearcher = new IndexSearcher(reader);
 
         indexSearcher.setSimilarity(similarity);
-        System.out.println(indexSearcher.getSimilarity());
 
-		for (QueryItem thisQuery: this.queries) {
+        for (QueryItem thisQuery: this.queries) {
             try {
-                System.out.println("Query ID " + thisQuery.getId() + " parsed");
+                logger.debug("Query ID " + thisQuery.getId() + " parsed");
                 String narrativeTerm = stripPunctuation(thisQuery.getNarrative());
                 String descriptionTerm = stripPunctuation(thisQuery.getDescription());
                 String titleTerm = stripPunctuation(thisQuery.getDescription());
@@ -98,7 +101,7 @@ class QueryEngine {
                         analyzer);
                 ScoreDoc[] hits = indexSearcher.search(query, 50).scoreDocs;
                 if (hits.length == 0) {
-                    System.out.println("No results for query " + thisQuery.getId());
+                    logger.warn("No results for query " + thisQuery.getId());
                 }
                 for (int i = 0; i < hits.length; i++) {
                     Document hitDoc = indexSearcher.doc(hits[i].doc);
@@ -107,8 +110,8 @@ class QueryEngine {
                 }
             }
             catch (Exception e) {
-                System.out.println("Error running query " + thisQuery.getId());
-                e.printStackTrace();
+                logger.error("Error running query " + thisQuery.getId());
+                logger.error("Exception: ", e);
             }
 
         }

@@ -19,6 +19,8 @@ import org.apache.lucene.document.TextField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 abstract public class Indexer
 {
@@ -45,7 +47,7 @@ abstract public class Indexer
             this.corpusDirectory = new File(corpusDirectory);
             ParseFile();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Exception: ", e);
         }
 
     }
@@ -66,7 +68,7 @@ abstract public class Indexer
     abstract void processSingleFile(File file, IndexWriter indexWriter);
 
     public void ParseFile() throws IOException {
-        System.out.println("Start Processing " + this.corpusDirectory.getAbsolutePath());
+        logger.debug("Start Processing " + this.corpusDirectory.getAbsolutePath());
         boolean exists = this.corpusDirectory.exists();
         assert (exists == true);
 
@@ -90,6 +92,23 @@ abstract public class Indexer
 
         indexWriter.close();
         directory.close();
-        System.out.println("Finished processing " + this.filesProcessed + " files in " + this.corpusDirectory.getAbsolutePath());
+        logger.debug("Finished processing " + this.filesProcessed + " files in " + this.corpusDirectory.getAbsolutePath());
+    }
+
+
+
+    protected static void indexOneField(Element document, org.apache.lucene.document.Document luceneDocument, String corpusName, String indexName) {
+        Elements element = document.select(corpusName);
+        String plainText = element.text().replace("&hyph;","-");
+        logger.debug(indexName + ": " + plainText);
+        luceneDocument.add(new TextField(indexName,plainText, Field.Store.YES));
+    }
+
+
+
+    protected static void indexID(Element document, org.apache.lucene.document.Document luceneDocument, String corpusName) {
+        Elements docNumber = document.select(corpusName);
+        logger.info("docNumber: " + docNumber.text());
+        luceneDocument.add(new StringField(Indexer.ID,docNumber.text(), Field.Store.YES));
     }
 }

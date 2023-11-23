@@ -20,15 +20,10 @@ public class Main {
         Analyzer analyzer = new EnglishAnalyzer();
         Similarity similarity = new ClassicSimilarity();
 
-        // index the federal reserver corpus which is in ./corpus/fr94
-        Indexer fedReserveIndexer = new FederalReserveIndexer(new EnglishAnalyzer(), "./corpus/fr94");
-        // index the financial times corpus which is in ./corpus/ft
-        Indexer ftIndexer = new FinancialTimesIndexer(new EnglishAnalyzer(), "./corpus/ft");
-        // index the federal reserver corpus which is in ./corpus/fr94
-        Indexer foriegnBroadcastIndexer = new ForiegnBroadcastInformationServiceIndexer(new EnglishAnalyzer(),
-                "./corpus/fbis");
-        // index the la times corpus which is in ./corpus/latimes
-        Indexer laTimesIndexer = new LaTimesIndexer(new EnglishAnalyzer(), "./corpus/fbis");
+        Indexer fedReserveIndexer = new FederalReserveIndexer(analyzer, "./corpus/fr94");
+        Indexer ftIndexer = new FinancialTimesIndexer(analyzer, "./corpus/ft");
+        Indexer foriegnBroadcastIndexer = new ForiegnBroadcastInformationServiceIndexer(analyzer,"./corpus/fbis");
+        Indexer laTimesIndexer = new LaTimesIndexer(analyzer, "./corpus/latimes");
         // now run the queries
         QueryEngine makeQueries = new QueryEngine(analyzer, similarity, "Standard");
     }
