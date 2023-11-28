@@ -33,6 +33,7 @@ public class ForiegnBroadcastInformationServiceIndexer extends Indexer {
                 indexID(document, LuceneDocument, "docno");
 
                 indexOneField(document, LuceneDocument, "Header", Indexer.TITLE);
+                indexOneField(document, LuceneDocument, "Date1", Indexer.BODY);
 
                 indexOneField(document, LuceneDocument, "text", Indexer.BODY);
 
