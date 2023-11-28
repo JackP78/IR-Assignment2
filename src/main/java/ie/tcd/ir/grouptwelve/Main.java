@@ -6,6 +6,8 @@ import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.search.similarities.ClassicSimilarity;
+import org.apache.lucene.search.similarities.LMDirichletSimilarity;
+import org.apache.lucene.search.similarities.MultiSimilarity;
 import org.apache.lucene.search.similarities.Similarity;
 
 public class Main {
@@ -18,7 +20,10 @@ public class Main {
 
     {
         Analyzer analyzer = new EnglishAnalyzer();
-        Similarity similarity = new ClassicSimilarity();
+
+        Similarity bm25Similarity = new BM25Similarity();
+        Similarity lmdSimilarity = new LMDirichletSimilarity();
+        Similarity similarity = new MultiSimilarity(new Similarity[] { bm25Similarity, lmdSimilarity });
 
         Indexer fedReserveIndexer = new FederalReserveIndexer(analyzer, "./corpus/fr94");
         Indexer ftIndexer = new FinancialTimesIndexer(analyzer, "./corpus/ft");

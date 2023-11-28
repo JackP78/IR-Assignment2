@@ -17,7 +17,6 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -74,7 +73,11 @@ class QueryEngine {
             logger.debug("description: " + description.text());
             Elements narrative = topic.select("narr");
             logger.debug("narrative: " + narrative.text());
-            QueryItem query = new QueryItem(Integer.parseInt(queryId), queryTitle.text(), description.text(), narrative.text());
+
+            // Update narrative to remove sentences that contain "not relevent"
+            String updatedNarrative = updateNarrative(narrative.text());
+
+            QueryItem query = new QueryItem(Integer.parseInt(queryId), queryTitle.text(), description.text(), updatedNarrative);
             this.queries.add(query);
         }
 
@@ -92,14 +95,21 @@ class QueryEngine {
         for (QueryItem thisQuery: this.queries) {
             try {
                 logger.debug("Query ID " + thisQuery.getId() + " parsed");
+
+                // Get separate topic terms
                 String narrativeTerm = stripPunctuation(thisQuery.getNarrative());
                 String descriptionTerm = stripPunctuation(thisQuery.getDescription());
                 String titleTerm = stripPunctuation(thisQuery.getDescription());
-                String[] terms = new String[]{narrativeTerm, descriptionTerm, titleTerm};
+                String[] terms = new String[]{titleTerm, descriptionTerm, descriptionTerm, narrativeTerm, narrativeTerm};
+
+                // Build query
                 Query query = MultiFieldQueryParser.parse(terms,
-                        new String[]{Indexer.TITLE, Indexer.SUMMARY, Indexer.BODY},
+                        new String[]{Indexer.TITLE, Indexer.SUMMARY, Indexer.BODY, Indexer.SUMMARY, Indexer.BODY},
                         analyzer);
-                ScoreDoc[] hits = indexSearcher.search(query, 50).scoreDocs;
+
+                // Get results from query
+                ScoreDoc[] hits = indexSearcher.search(query, 1000).scoreDocs;
+
                 if (hits.length == 0) {
                     logger.warn("No results for query " + thisQuery.getId());
                 }
@@ -113,7 +123,6 @@ class QueryEngine {
                 logger.error("Error running query " + thisQuery.getId());
                 logger.error("Exception: ", e);
             }
-
         }
 
 		reader.close();
@@ -123,6 +132,22 @@ class QueryEngine {
     // get rid of those hasty question marks
     private String stripPunctuation(String line) {
         return line.replaceAll("\\/", "");
+    }
+
+        // Removes sentences that contain "not relevant" from Narrative
+    public static String updateNarrative(String narrative) {
+        String input = narrative.substring(10);
+
+        String[] sentences = input.split("(?<=[a-z])\\.\\s+");
+
+        StringBuilder result = new StringBuilder();
+        for (String sentence : sentences) {
+            // Check if the sentence contains "not relevant"
+            if (!sentence.contains("not relevant")) {
+                result.append(sentence);
+            }
+        }
+        return "Narrative:" + "." + result.toString();
     }
 
 }
