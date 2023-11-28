@@ -39,6 +39,10 @@ public class LaTimesIndexer extends Indexer {
 
                 indexOneField(document, LuceneDocument, "text", Indexer.BODY);
 
+                indexOneField(document, LuceneDocument, "date", Indexer.DATE);
+
+                indexOneField(document, LuceneDocument, "subject", Indexer.SUMMARY);
+
                 // add the document to the lucene index
                 indexWriter.addDocument(LuceneDocument);
             }
