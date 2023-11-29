@@ -26,14 +26,14 @@ public class Main {
         Similarity lmdSimilarity = new LMDirichletSimilarity();
         Similarity similarity = new MultiSimilarity(new Similarity[] { bm25Similarity, lmdSimilarity });
 
-        createIndex(analyzer);
+        //createIndex(analyzer);
         // parseQueries
         QueryEngine makeQueries = new QueryEngine();
 
         makeQueries.ExecuteQueries(analyzer, classic, "Classic");
         makeQueries.ExecuteQueries(analyzer, bm25Similarity, "BM25");
         makeQueries.ExecuteQueries(analyzer, lmdSimilarity, "LMD");
-        makeQueries.ExecuteQueries(analyzer, similarity, "Multi");
+        makeQueries.ExecuteQueries(analyzer, similarity, "FinalResults");
     }
 
     private static void createIndex(Analyzer analyzer) {
