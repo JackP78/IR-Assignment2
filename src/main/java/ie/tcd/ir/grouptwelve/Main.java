@@ -21,15 +21,25 @@ public class Main {
     {
         Analyzer analyzer = new EnglishAnalyzer();
 
+        Similarity classic = new ClassicSimilarity();
         Similarity bm25Similarity = new BM25Similarity();
         Similarity lmdSimilarity = new LMDirichletSimilarity();
         Similarity similarity = new MultiSimilarity(new Similarity[] { bm25Similarity, lmdSimilarity });
 
+        createIndex(analyzer);
+        // parseQueries
+        QueryEngine makeQueries = new QueryEngine();
+
+        makeQueries.ExecuteQueries(analyzer, classic, "Classic");
+        makeQueries.ExecuteQueries(analyzer, bm25Similarity, "BM25");
+        makeQueries.ExecuteQueries(analyzer, lmdSimilarity, "LMD");
+        makeQueries.ExecuteQueries(analyzer, similarity, "Multi");
+    }
+
+    private static void createIndex(Analyzer analyzer) {
         Indexer fedReserveIndexer = new FederalReserveIndexer(analyzer, "./corpus/fr94");
         Indexer ftIndexer = new FinancialTimesIndexer(analyzer, "./corpus/ft");
         Indexer foriegnBroadcastIndexer = new ForiegnBroadcastInformationServiceIndexer(analyzer,"./corpus/fbis");
         Indexer laTimesIndexer = new LaTimesIndexer(analyzer, "./corpus/latimes");
-        // now run the queries
-        QueryEngine makeQueries = new QueryEngine(analyzer, similarity, "Standard");
     }
 }
