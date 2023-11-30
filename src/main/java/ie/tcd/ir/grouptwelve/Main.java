@@ -26,7 +26,7 @@ public class Main {
         Similarity lmdSimilarity = new LMDirichletSimilarity();
         Similarity similarity = new MultiSimilarity(new Similarity[] { bm25Similarity, lmdSimilarity });
 
-        // createIndex(analyzer);
+        createIndex(analyzer);
         // parseQueries
         QueryEngine makeQueries = new QueryEngine();
 
