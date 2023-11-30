@@ -20,20 +20,23 @@ public class Main {
 
     {
         Analyzer analyzer = new EnglishAnalyzer();
-
+        System.out.println("Indexing ... this may take a while ...");
         Similarity classic = new ClassicSimilarity();
         Similarity bm25Similarity = new BM25Similarity();
         Similarity lmdSimilarity = new LMDirichletSimilarity();
         Similarity similarity = new MultiSimilarity(new Similarity[] { bm25Similarity, lmdSimilarity });
 
         createIndex(analyzer);
+        System.out.println("Done.");
         // parseQueries
+        System.out.println("Quering...");
         QueryEngine makeQueries = new QueryEngine();
 
         makeQueries.ExecuteQueries(analyzer, classic, "Classic");
         makeQueries.ExecuteQueries(analyzer, bm25Similarity, "BM25");
         makeQueries.ExecuteQueries(analyzer, lmdSimilarity, "LMD");
         makeQueries.ExecuteQueries(analyzer, similarity, "FinalResults");
+        System.out.println("Finished.");
     }
 
     private static void createIndex(Analyzer analyzer) {
