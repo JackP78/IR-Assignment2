@@ -2,15 +2,15 @@ package ie.tcd.ir.grouptwelve;
 
 public class QueryItem {
 
-    public QueryItem(int id, String title, String description, String narrative) {
+    public QueryItem(int id, String title, String description, String relevantNarrative, String irrelevant) {
         this.id = id;
         this.title = title;
         this.description = description;
-        this.narrative = narrative;
+        this.narrative = relevantNarrative;
+        this.irrelevant = irrelevant;
     }
 
     private int id;
-
 
     public int getId() {
         return id;
@@ -44,9 +44,15 @@ public class QueryItem {
         this.title = title;
     }
 
+    public String getIrrelevant() {
+        return irrelevant;
+    }
+
     private String description;
 
     private String narrative;
 
     private String title;
+
+    private String irrelevant;
 }

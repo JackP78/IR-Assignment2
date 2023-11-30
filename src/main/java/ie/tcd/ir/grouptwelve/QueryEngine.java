@@ -1,12 +1,15 @@
 package ie.tcd.ir.grouptwelve;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
@@ -14,13 +17,15 @@ import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-
 
 class QueryEngine {
 
@@ -50,7 +55,7 @@ class QueryEngine {
 
         FileWriter fileWriter = new FileWriter(filePath);
         PrintWriter printWriter = new PrintWriter(fileWriter);
-        for (QueryResult result: this.results) {
+        for (QueryResult result : this.results) {
             printWriter.println(result.toString());
         }
         printWriter.close();
@@ -75,9 +80,11 @@ class QueryEngine {
             logger.debug("narrative: " + narrative.text());
 
             // Update narrative to remove sentences that contain "not relevent"
-            String updatedNarrative = updateNarrative(narrative.text());
+            // First in array is relevant terms and second is irrelevant terms
+            String[] narratives = updateNarrative(narrative.text());
 
-            QueryItem query = new QueryItem(Integer.parseInt(queryId), queryTitle.text(), description.text(), updatedNarrative);
+            QueryItem query = new QueryItem(Integer.parseInt(queryId), queryTitle.text(), description.text(),
+                    narratives[0], narratives[1]);
             this.queries.add(query);
         }
 
@@ -86,26 +93,39 @@ class QueryEngine {
 
     public void ExecuteQueries(Analyzer analyzer, Similarity similarity) throws IOException, ParseException {
         Directory directory = FSDirectory.open(Paths.get(Main.INDEX_DIRECTORY));
-		
-		DirectoryReader reader = DirectoryReader.open(directory);
-		IndexSearcher indexSearcher = new IndexSearcher(reader);
+
+        DirectoryReader reader = DirectoryReader.open(directory);
+        IndexSearcher indexSearcher = new IndexSearcher(reader);
 
         indexSearcher.setSimilarity(similarity);
 
-        for (QueryItem thisQuery: this.queries) {
+        for (QueryItem thisQuery : this.queries) {
             try {
                 logger.debug("Query ID " + thisQuery.getId() + " parsed");
 
                 // Get separate topic terms
                 String narrativeTerm = stripPunctuation(thisQuery.getNarrative());
+                String irrelevantTerm = stripPunctuation(thisQuery.getIrrelevant());
                 String descriptionTerm = stripPunctuation(thisQuery.getDescription());
-                String titleTerm = stripPunctuation(thisQuery.getDescription());
-                String[] terms = new String[]{titleTerm, descriptionTerm, descriptionTerm, narrativeTerm, narrativeTerm};
+                String titleTerm = stripPunctuation(thisQuery.getTitle());
 
-                // Build query
-                Query query = MultiFieldQueryParser.parse(terms,
-                        new String[]{Indexer.TITLE, Indexer.SUMMARY, Indexer.BODY, Indexer.SUMMARY, Indexer.BODY},
-                        analyzer);
+                String[] terms;
+                String[] fields;
+
+                if (irrelevantTerm.equals("")) {
+                    terms = new String[] { titleTerm, descriptionTerm, descriptionTerm,
+                            narrativeTerm, narrativeTerm };
+                    fields = new String[] { Indexer.TITLE, Indexer.SUMMARY, Indexer.BODY, Indexer.SUMMARY,
+                            Indexer.BODY };
+                } else {
+                    terms = new String[] { titleTerm, descriptionTerm, descriptionTerm,
+                            "\"" + narrativeTerm + "\" NOT \"" + irrelevantTerm + "\"",
+                            "\"" + narrativeTerm + "\" NOT \"" + irrelevantTerm + "\"" };
+                    fields = new String[] { Indexer.TITLE, Indexer.SUMMARY, Indexer.BODY, Indexer.SUMMARY,
+                            Indexer.BODY };
+                }
+
+                Query query = MultiFieldQueryParser.parse(terms, fields, analyzer);
 
                 // Get results from query
                 ScoreDoc[] hits = indexSearcher.search(query, 1000).scoreDocs;
@@ -115,39 +135,43 @@ class QueryEngine {
                 }
                 for (int i = 0; i < hits.length; i++) {
                     Document hitDoc = indexSearcher.doc(hits[i].doc);
-                    QueryResult searchResult = new QueryResult(thisQuery.getId(),hitDoc.get("ID"), i+1, hits[i].score, this.similarityStrategy);
+                    QueryResult searchResult = new QueryResult(thisQuery.getId(), hitDoc.get("ID"), i + 1,
+                            hits[i].score, this.similarityStrategy);
                     this.results.add(searchResult);
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 logger.error("Error running query " + thisQuery.getId());
                 logger.error("Exception: ", e);
             }
         }
 
-		reader.close();
-		directory.close();
+        reader.close();
+        directory.close();
     }
 
     // get rid of those hasty question marks
     private String stripPunctuation(String line) {
-        return line.replaceAll("\\/", "");
+        return line.replaceAll("[^a-zA-Z ]", " ").toLowerCase().trim();
     }
 
-        // Removes sentences that contain "not relevant" from Narrative
-    public static String updateNarrative(String narrative) {
+    // Partitions relevant and irrelevant terms from the narrative
+    public static String[] updateNarrative(String narrative) {
         String input = narrative.substring(10);
 
         String[] sentences = input.split("(?<=[a-z])\\.\\s+");
 
-        StringBuilder result = new StringBuilder();
+        StringBuilder relevant = new StringBuilder();
+        StringBuilder irrelevant = new StringBuilder();
         for (String sentence : sentences) {
             // Check if the sentence contains "not relevant"
             if (!sentence.contains("not relevant")) {
-                result.append(sentence);
+                relevant.append(sentence);
+
+            } else {
+                irrelevant.append(sentence);
             }
         }
-        return "Narrative:" + "." + result.toString();
-    }
 
+        return new String[] { "Narrative:" + "." + relevant.toString(), irrelevant.toString() };
+    }
 }

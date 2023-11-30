@@ -24,8 +24,9 @@ public class Main {
         Similarity bm25Similarity = new BM25Similarity();
         Similarity lmdSimilarity = new LMDirichletSimilarity();
         Similarity similarity = new MultiSimilarity(new Similarity[] { bm25Similarity, lmdSimilarity });
-
-        Indexer fedReserveIndexer = new FederalReserveIndexer(analyzer, "./corpus/fr94");
+        System.out.println("Indexing...");
+        Indexer fedReserveIndexer = new FederalReserveIndexer(analyzer,
+                "./corpus/fr94");
         Indexer ftIndexer = new FinancialTimesIndexer(analyzer, "./corpus/ft");
         Indexer foriegnBroadcastIndexer = new ForiegnBroadcastInformationServiceIndexer(analyzer, "./corpus/fbis");
         Indexer laTimesIndexer = new LaTimesIndexer(analyzer, "./corpus/latimes");
