@@ -29,7 +29,7 @@ public class Main {
         createIndex(analyzer);
         System.out.println("Done.");
         // parseQueries
-        System.out.println("Quering...");
+        System.out.println("Querying...");
         QueryEngine makeQueries = new QueryEngine();
 
         makeQueries.ExecuteQueries(analyzer, classic, "Classic");
