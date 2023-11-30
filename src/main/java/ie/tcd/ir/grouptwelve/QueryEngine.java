@@ -29,28 +29,23 @@ import org.jsoup.select.Elements;
 
 class QueryEngine {
 
-    private String similarityStrategy;
-
     private ArrayList<QueryItem> queries = new ArrayList<QueryItem>();
     private ArrayList<QueryResult> results = new ArrayList<QueryResult>();
 
     protected static Logger logger = LogManager.getLogger(QueryEngine.class);
 
-    public QueryEngine(Analyzer analyzer, Similarity similarity, String type) {
+    public QueryEngine() {
         try {
             ParseFile();
-            this.similarityStrategy = type;
-            ExecuteQueries(analyzer, similarity);
-            SaveResultsFile();
         } catch (Exception e) {
             logger.error("Issue with QueryEngine.");
             logger.error("Exception: ", e);
         }
     }
 
-    public void SaveResultsFile() throws IOException {
+    public void SaveResultsFile(String fileName) throws IOException {
         Files.createDirectories(Paths.get(Main.RESULTS_DIRECTORY));
-        String filePath = Main.RESULTS_DIRECTORY + this.similarityStrategy + ".test";
+        String filePath = Main.RESULTS_DIRECTORY + fileName + ".test";
         logger.info("Writing file " + filePath);
 
         FileWriter fileWriter = new FileWriter(filePath);
@@ -91,62 +86,67 @@ class QueryEngine {
         logger.info("Num queries processed " + this.queries.size());
     }
 
-    public void ExecuteQueries(Analyzer analyzer, Similarity similarity) throws IOException, ParseException {
-        Directory directory = FSDirectory.open(Paths.get(Main.INDEX_DIRECTORY));
+    public void ExecuteQueries(Analyzer analyzer, Similarity similarity, String similarityStrategy) {
+        results = new ArrayList<QueryResult>();
+        try {
+            Directory directory = FSDirectory.open(Paths.get(Main.INDEX_DIRECTORY));
 
-        DirectoryReader reader = DirectoryReader.open(directory);
-        IndexSearcher indexSearcher = new IndexSearcher(reader);
+            DirectoryReader reader = DirectoryReader.open(directory);
+            IndexSearcher indexSearcher = new IndexSearcher(reader);
 
-        indexSearcher.setSimilarity(similarity);
+            indexSearcher.setSimilarity(similarity);
+            for (QueryItem thisQuery : this.queries) {
+                try {
+                    logger.debug("Query ID " + thisQuery.getId() + " parsed");
 
-        for (QueryItem thisQuery : this.queries) {
-            try {
-                logger.debug("Query ID " + thisQuery.getId() + " parsed");
+                    // Get separate topic terms
+                    String narrativeTerm = stripPunctuation(thisQuery.getNarrative());
+                    String irrelevantTerm = stripPunctuation(thisQuery.getIrrelevant());
+                    String descriptionTerm = stripPunctuation(thisQuery.getDescription());
+                    String titleTerm = stripPunctuation(thisQuery.getTitle());
 
-                // Get separate topic terms
-                String narrativeTerm = stripPunctuation(thisQuery.getNarrative());
-                String irrelevantTerm = stripPunctuation(thisQuery.getIrrelevant());
-                String descriptionTerm = stripPunctuation(thisQuery.getDescription());
-                String titleTerm = stripPunctuation(thisQuery.getTitle());
+                    String[] terms;
+                    String[] fields;
 
-                String[] terms;
-                String[] fields;
+                    if (irrelevantTerm.equals("")) {
+                        terms = new String[] { titleTerm, descriptionTerm, descriptionTerm,
+                                narrativeTerm, narrativeTerm };
+                        fields = new String[] { Indexer.TITLE, Indexer.SUMMARY, Indexer.BODY, Indexer.SUMMARY,
+                                Indexer.BODY };
+                    } else {
+                        terms = new String[] { titleTerm, descriptionTerm, descriptionTerm,
+                                "\"" + narrativeTerm + "\" NOT \"" + irrelevantTerm + "\"",
+                                "\"" + narrativeTerm + "\" NOT \"" + irrelevantTerm + "\"" };
+                        fields = new String[] { Indexer.TITLE, Indexer.SUMMARY, Indexer.BODY, Indexer.SUMMARY,
+                                Indexer.BODY };
+                    }
 
-                if (irrelevantTerm.equals("")) {
-                    terms = new String[] { titleTerm, descriptionTerm, descriptionTerm,
-                            narrativeTerm, narrativeTerm };
-                    fields = new String[] { Indexer.TITLE, Indexer.SUMMARY, Indexer.BODY, Indexer.SUMMARY,
-                            Indexer.BODY };
-                } else {
-                    terms = new String[] { titleTerm, descriptionTerm, descriptionTerm,
-                            "\"" + narrativeTerm + "\" NOT \"" + irrelevantTerm + "\"",
-                            "\"" + narrativeTerm + "\" NOT \"" + irrelevantTerm + "\"" };
-                    fields = new String[] { Indexer.TITLE, Indexer.SUMMARY, Indexer.BODY, Indexer.SUMMARY,
-                            Indexer.BODY };
+                    Query query = MultiFieldQueryParser.parse(terms, fields, analyzer);
+
+                    // Get results from query
+                    ScoreDoc[] hits = indexSearcher.search(query, 1000).scoreDocs;
+
+                    if (hits.length == 0) {
+                        logger.warn("No results for query " + thisQuery.getId());
+                    }
+                    for (int i = 0; i < hits.length; i++) {
+                        Document hitDoc = indexSearcher.doc(hits[i].doc);
+                        QueryResult searchResult = new QueryResult(thisQuery.getId(), hitDoc.get("ID"), i + 1,
+                                hits[i].score, similarityStrategy);
+                        this.results.add(searchResult);
+                    }
+                } catch (Exception e) {
+                    logger.error("Error running query " + thisQuery.getId());
+                    logger.error("Exception: ", e);
                 }
-
-                Query query = MultiFieldQueryParser.parse(terms, fields, analyzer);
-
-                // Get results from query
-                ScoreDoc[] hits = indexSearcher.search(query, 1000).scoreDocs;
-
-                if (hits.length == 0) {
-                    logger.warn("No results for query " + thisQuery.getId());
-                }
-                for (int i = 0; i < hits.length; i++) {
-                    Document hitDoc = indexSearcher.doc(hits[i].doc);
-                    QueryResult searchResult = new QueryResult(thisQuery.getId(), hitDoc.get("ID"), i + 1,
-                            hits[i].score, this.similarityStrategy);
-                    this.results.add(searchResult);
-                }
-            } catch (Exception e) {
-                logger.error("Error running query " + thisQuery.getId());
-                logger.error("Exception: ", e);
             }
-        }
 
-        reader.close();
-        directory.close();
+            reader.close();
+            directory.close();
+            SaveResultsFile(similarityStrategy);
+        } catch (Exception c) {
+            logger.error("Exception: ", c);
+        }
     }
 
     // get rid of those hasty question marks
